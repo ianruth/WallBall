@@ -1,0 +1,7 @@
+Michael Madden
+Chris Black
+Ian Ruth
+
+Assignment 2 - Part II
+
+    We are currently working on the same implementation within the same roles.  Since graphics are pretty much done Chris and Ian are doing physics, and Michael is doing the sound.  So far we have a paddle and ball that can hit each other so you can play a super basic version of the game.  It uses the mouse to move and the objective is to not let the ball past the paddle.  If the ball is lost, you can hit enter to reset its position at the origin.  The camera works sufficiently right now and we do not know how much we are going to really need to change it going ahead. We are still working a lot on the physics and sound and have not been able to get them to work with Ogre yet.  The physics have been mostly written out and it just a case of integrating it correctly with Ogre and then tweaking and making corrections.  Sound has been very confusing as a lot of tutorials use SDL_mixer, but once I realized to ignore these, going has been much smoother.  The SoundManager has all of the methods it needs, it's just a case of combining different ideas from tutorials since there is not one that describes everything.

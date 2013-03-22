@@ -1,0 +1,7 @@
+﻿We accomplished all that we said we would do.  The ball bounces off the paddle. Score is kept.  There are power ups and the ball stays within its bounds.  The code is a bit messy due to time constraints but it works.  We did as well as we said we would do in the first document.  The one place where the code doesn't manage to work perfectly is in collisions.  It works as it should but the implementation of bullet in our project is sloppy.
+
+Manual 
+Goal: Keep the ball in front of the paddle for as long as possible.  If you miss the ball you loose.  The longer you keep the ball inbounds the more points you get
+Controls: You move  the paddle with the mouse
+	    Press enter if you want to reset
+
