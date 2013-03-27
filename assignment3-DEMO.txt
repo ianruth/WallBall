@@ -1,0 +1,7 @@
+Michael Madden
+Chris Black
+Ian Ruth
+
+Assignment 3 - Demo
+
+    Currently we are trying to make WallBall multiplayer by making essentially pong.  Singleplayer can stay the same with just bouncing a ball off a ball and trying to keep it in play, but multiplayer would not be fun just bouncing a ball off a wall together.  Instead we are going to implement competitive play by knocking out the back wall and placing a new paddle there for the other player to control.  So far we have implemented a much better GUI system that has a Main Menu, a Multiplayer Menu, and an in-game menu when the ESC button has been pressed.  The Main Menu allows a choice between Singleplayer, Multiplayer or leaving the game.  In the multiplayer menu the user can choose between being the host or the client or returning to the Main Menu.  With the in-game menu the user can either resume the game, return to the Main Menu, or quit the game.  Our networking code is not fully developed at this point, but we have started attempting to send information using TCP/IP between the host and client.  This code will only need to keep track of the position of the ball, power up, and two paddles so there is not much information to pass.  We do not expect to run in to problems implementing it this way.

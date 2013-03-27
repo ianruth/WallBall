@@ -35,7 +35,6 @@ WallBall::WallBall(void)
     mPluginsCfg(Ogre::StringUtil::BLANK),
     mTrayMgr(0),
     mCameraMan(0),
-    mDetailsPanel(0),
     mCursorWasVisible(false),
     mShutDown(false),
     mInputManager(0),
@@ -71,7 +70,7 @@ btRigidBody* addPlane(float x,float y,float z,btVector3 normal)
 	btMotionState* motion=new btDefaultMotionState(t);
 	btRigidBody::btRigidBodyConstructionInfo info(0.0,motion,plane);
 	btRigidBody* body=new btRigidBody(info);
-  body->setRestitution(1.0);
+    body->setRestitution(1.0);
 	world->addRigidBody(body);
 	bodies.push_back(body);
 	return body;
@@ -424,36 +423,7 @@ bool WallBall::go(void)
     Ogre::WindowEventUtilities::addWindowEventListener(mWindow, this);
  
     mTrayMgr = new OgreBites::SdkTrayManager("InterfaceName", mWindow, mMouse, this);
-    
- 
-    // create a params panel for displaying sample details
-    Ogre::StringVector items;
-    //items.push_back("Score: ");
-    
-    items.push_back("Score");
-    items.push_back("");//cam.pY");
-    items.push_back("");//cam.pZ");
-    items.push_back("");//");
-    items.push_back("");
-    items.push_back("");
-    items.push_back("Power Up");
-    items.push_back("");
-    items.push_back("");
-    items.push_back("Filtering");
-    items.push_back("Poly Mode");
-    
- 
-    mDetailsPanel = mTrayMgr->createParamsPanel(OgreBites::TL_NONE, "DetailsPanel", 200, items);
-    mDetailsPanel->setParamValue(9, "Bilinear");
-    mDetailsPanel->setParamValue(10, "Solid");
-
-    mTrayMgr->showCursor();
-    mTrayMgr->showBackdrop("Examples/Chrome");
-    mDetailsPanel->hide();
-
-    Ogre::FontManager::getSingleton().getByName("SdkTrays/Caption")->load();
-    OgreBites::Button* singleplayer = mTrayMgr->createButton(OgreBites::TL_CENTER, "Singleplayer", "Singleplayer", 250);
-    OgreBites::Button* multiplayer = mTrayMgr->createButton(OgreBites::TL_CENTER, "Multiplayer", "Multiplayer", 250);
+    GUIManager::GUIControl.setup(mTrayMgr);
  
     mRoot->addFrameListener(this);
 //-------------------------------------------------------------------------------------
@@ -475,38 +445,15 @@ bool WallBall::frameRenderingQueued(const Ogre::FrameEvent& evt)
     mKeyboard->capture();
     mMouse->capture();
     
-    mTrayMgr->frameRenderingQueued(evt);
-    mTrayMgr->adjustTrays(); 
+    GUIManager::GUIControl.frameRenderingQueued(evt); 
 
-    if(!singleplayer && !multiplayer){
-        mTrayMgr->showCursor();
-        mTrayMgr->showBackdrop("Examples/Chrome");
-        mDetailsPanel->hide();
-        
-    }
-    else {
-        if (!mTrayMgr->isDialogVisible())
+    if(singleplayer || multiplayer){
+        if (!GUIManager::GUIControl.isDialogVisible())
         {
             mCameraMan->frameRenderingQueued(evt);   // if dialog isn't up, then update the camera
-            if (mDetailsPanel->isVisible())   // if details panel is visible, then update its contents
+            if (GUIManager::GUIControl.isScoreboardVisible())   // if details panel is visible, then update its contents
             {
-	        if(inPlay){
-            	mDetailsPanel->setParamValue(0, Ogre::StringConverter::toString((timer.getMilliseconds()/100)+score));
-		        mDetailsPanel->setParamValue(1, "");
-		    }else
-                mDetailsPanel->setParamValue(1, "GAME OVER");
-
-            mDetailsPanel->setParamValue(2, "Bounce the ball for");
-            mDetailsPanel->setParamValue(3, "as long as possible");
-            mDetailsPanel->setParamValue(4, "to win!");
-            mDetailsPanel->setParamValue(6, "");
-
-	       if(effect<=1)
-            	mDetailsPanel->setParamValue(6, "Accelerate");
-	        else if(effect>=2)
-           	    mDetailsPanel->setParamValue(6, "Slow");
-
-	        mDetailsPanel->setParamValue(7, "Press Enter to Restart");
+                GUIManager::GUIControl.inPlay(inPlay, effect, timer, score);
             }
         }
     
@@ -609,8 +556,8 @@ bool WallBall::frameRenderingQueued(const Ogre::FrameEvent& evt)
 		    Ogre::SceneNode* powerupNode = mSceneMgr->getSceneNode("PowerUpNode");
 		    powerupNode->_update(false,false);
 		    Ogre::AxisAlignedBox bounds =powerupNode->_getWorldAABB();
-		    Ogre::Vector3 max = bounds.getMaximum();
-		    Ogre::Vector3 min = bounds.getMinimum();
+		    Ogre::Vector3 max = bounds.getMaximum() - 100;
+		    Ogre::Vector3 min = bounds.getMinimum() + 100;
 		    if(ballPosition.x <= max.x && ballPosition.y <= max.y && ballPosition.z <= max.z && ballPosition.x >= min.x && ballPosition.y >= min.y && ballPosition.z >= min.z)
 		    {
 			    hasPowerUp=false;
@@ -641,12 +588,7 @@ bool WallBall::frameRenderingQueued(const Ogre::FrameEvent& evt)
 //-------------------------------------------------------------------------------------
 bool WallBall::keyPressed( const OIS::KeyEvent &arg )
 {
-    if (mTrayMgr->isDialogVisible()) return true;   // don't process any more keys if dialog is up
- 
-    //if (arg.key == OIS::KC_F)   // toggle visibility of advanced frame stats
-    //{
-    //    mTrayMgr->toggleAdvancedFrameStats();
-    //}
+    if (GUIManager::GUIControl.isDialogVisible()) return true;   // don't process any more keys if dialog is up
     
     else if (arg.key == OIS::KC_T)   // cycle texture filtering mode
     {
@@ -654,7 +596,7 @@ bool WallBall::keyPressed( const OIS::KeyEvent &arg )
         Ogre::TextureFilterOptions tfo;
         unsigned int aniso;
  
-        switch (mDetailsPanel->getParamValue(9).asUTF8()[0])
+        switch (GUIManager::GUIControl.getScoreboardParam(9).asUTF8()[0])
         {
         case 'B':
             newVal = "Trilinear";
@@ -679,7 +621,7 @@ bool WallBall::keyPressed( const OIS::KeyEvent &arg )
  
         Ogre::MaterialManager::getSingleton().setDefaultTextureFiltering(tfo);
         Ogre::MaterialManager::getSingleton().setDefaultAnisotropy(aniso);
-        mDetailsPanel->setParamValue(9, newVal);
+        GUIManager::GUIControl.setScoreboardParam(9, newVal);
     }
     else if (arg.key == OIS::KC_R)   // cycle polygon rendering mode
     {
@@ -702,7 +644,7 @@ bool WallBall::keyPressed( const OIS::KeyEvent &arg )
         }
  
         mCamera->setPolygonMode(pm);
-        mDetailsPanel->setParamValue(10, newVal);
+        GUIManager::GUIControl.setScoreboardParam(10, newVal);
     }
     else if(arg.key == OIS::KC_F5)   // refresh all textures
     {
@@ -714,7 +656,7 @@ bool WallBall::keyPressed( const OIS::KeyEvent &arg )
     }
     else if (arg.key == OIS::KC_ESCAPE)
     {
-        mShutDown = true;
+        GUIManager::GUIControl.pause();
     }
 
     else if (arg.key == OIS::KC_RETURN)
@@ -771,21 +713,38 @@ bool WallBall::mouseMoved( const OIS::MouseEvent &arg )
     mSceneMgr->getCamera("PlayerCam")->lookAt(position/2);
     return true;
 }
+
+void WallBall::buttonHit(OgreBites::Button* button){
+    if (button->getName().compare("Singleplayer") == 0){
+        singleplayer = true;
+        GUIManager::GUIControl.end_MainScreen();
+    }
+    else if (button->getName().compare("Multiplayer") == 0){
+        multiplayer = true;
+        GUIManager::GUIControl.end_MainScreen();
+        GUIManager::GUIControl.begin_MultiplayerScreen();
+    }
+    else if (button->getName().compare("Exit") == 0 || button->getName().compare("PauseExit") == 0)
+        mShutDown = true;
+    else if(button->getName().compare("Resume") == 0)
+        GUIManager::GUIControl.pause();
+    else if(button->getName().compare("MainMenu") == 0){
+        GUIManager::GUIControl.pause();
+        GUIManager::GUIControl.begin_MainScreen();
+    }
+    else if(button->getName().compare("Back") == 0){
+        GUIManager::GUIControl.end_MultiplayerScreen();
+        GUIManager::GUIControl.begin_MainScreen();
+    }
+    else if(button->getName().compare("Host") == 0)
+        GUIManager::GUIControl.end_MultiplayerScreen();
+    else if(button->getName().compare("Client") == 0)
+        GUIManager::GUIControl.end_MultiplayerScreen();
+}
  
 bool WallBall::mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id )
 {
-    if (mTrayMgr->injectMouseDown(arg, id))
-    {
-        OgreBites::Button* pressedButton;
-        mTrayMgr->buttonHit(pressedButton);
-        //if (pressedButton->getName().compare("Singleplayer") == 0)
-            singleplayer = true; 
-        //if (pressedButton->getName().compare("Multiplayer") == 0)
-            multiplayer = true;
-        mTrayMgr->hideAll();
-        mDetailsPanel->show();
-        return true;
-    }
+    if (mTrayMgr->injectMouseDown(arg, id)) return true;
     mCameraMan->injectMouseDown(arg, id);
     return true;
 }
@@ -826,6 +785,98 @@ void WallBall::windowClosed(Ogre::RenderWindow* rw)
     }
 }
 
+void NetworkHost(void)      //http://content.gpwiki.org/index.php/SDL:Tutorial:Using_SDL_net <- good code here, adapt messages accordingly
+{                           //http://jcatki.no-ip.org:8080/SDL_net/SDL_net.html <- good documentation here
+  TCPsocket sd, csd;      /* Socket descriptor, Client socket descriptor */
+  IPaddress ip, *remoteIP;
+  int quit, quit2;
+  char buffer[512];
+
+	if (SDLNet_Init() < 0)
+	{
+		fprintf(stderr, "SDLNet_Init: %s\n", SDLNet_GetError());
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* Resolving the host using NULL make network interface to listen */
+	if (SDLNet_ResolveHost(&ip, NULL, 2000) < 0)
+	{
+		fprintf(stderr, "SDLNet_ResolveHost: %s\n", SDLNet_GetError());
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* Open a connection with the IP provided (listen on the host's port) */
+	if (!(sd = SDLNet_TCP_Open(&ip)))
+	{
+		fprintf(stderr, "SDLNet_TCP_Open: %s\n", SDLNet_GetError());
+		exit(EXIT_FAILURE);
+	}
+ 
+	/* Wait for a connection, send data and term */
+	quit = 0;
+	while (!quit)
+	{
+		/* This check the sd if there is a pending connection.
+		* If there is one, accept that, and open a new socket for communicating */
+		if ((csd = SDLNet_TCP_Accept(sd)))
+		{
+			/* Now we can communicate with the client using csd socket
+			* sd will remain opened waiting other connections */
+ 
+			/* Get the remote address */
+			if ((remoteIP = SDLNet_TCP_GetPeerAddress(csd)))
+				/* Print the address, converting in the host format */
+				printf("Host connected: %x %d\n", SDLNet_Read32(&remoteIP->host), SDLNet_Read16(&remoteIP->port));
+			else
+				fprintf(stderr, "SDLNet_TCP_GetPeerAddress: %s\n", SDLNet_GetError());
+ 
+			quit2 = 0;
+			while (!quit2)
+			{
+				if (SDLNet_TCP_Recv(csd, buffer, 512) > 0)
+				{
+					printf("Client say: %s\n", buffer);
+ 
+					if(strcmp(buffer, "exit") == 0)	/* Terminate this connection */
+					{
+						quit2 = 1;
+						printf("Terminate connection\n");
+					}
+					if(strcmp(buffer, "quit") == 0)	/* Quit the program */
+					{
+						quit2 = 1;
+						quit = 1;
+						printf("Quit program\n");
+					}
+				}
+				//printf("Write something:\n>");
+				//scanf("%s", buffer);
+		 						//put message in buffer
+				len = strlen(buffer) + 1;
+				if (SDLNet_TCP_Send(csd, (void *)buffer, len) < len)
+				{
+					fprintf(stderr, "SDLNet_TCP_Send: %s\n", SDLNet_GetError());
+					exit(EXIT_FAILURE);
+				}
+
+			}
+ 
+			/* Close the client socket */
+			SDLNet_TCP_Close(csd);
+		}
+	}
+ 
+	SDLNet_TCP_Close(sd);
+	SDLNet_Quit();
+}
+
+void NetworkClient(void)    //http://content.gpwiki.org/index.php/SDL:Tutorial:Using_SDL_net <- good code here, adapt messages accordingly
+{                           //http://jcatki.no-ip.org:8080/SDL_net/SDL_net.html <- good documentation here
+    IPaddress ip;           /* Server address */
+    TCPsocket sd;           /* Socket descriptor */
+    int quit, len;
+    char buffer[512];
+}
 
 void WallBall::generatePowerup(void)
 {
