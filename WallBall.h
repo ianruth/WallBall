@@ -31,11 +31,14 @@ This source file is part of the
 #include <OISKeyboard.h>
 #include <OISMouse.h>
  
-#include <SdkTrays.h>
+#include <GUIManager.h>
+
 #include <SdkCameraMan.h>
 
 #include "Simulator.h"
 #include "SoundManager.h"
+
+#include "SDL_net.h"
 
 #include <time.h>
 #include <btBulletDynamicsCommon.h>
@@ -65,7 +68,6 @@ protected:
     // OgreBites
     OgreBites::SdkTrayManager* mTrayMgr;
     OgreBites::SdkCameraMan* mCameraMan;      // basic camera controller
-    OgreBites::ParamsPanel* mDetailsPanel;    // sample details panel
     bool mCursorWasVisible;                   // was cursor visible before dialog appeared
     bool mShutDown;
  
@@ -84,6 +86,10 @@ protected:
     //SDK Trays
     bool singleplayer;
     bool multiplayer;
+
+    //Networking with SDL_net
+    void NetworkHost(void);
+    void NetworkClient(void);
  
     // Ogre::FrameListener
     virtual bool frameRenderingQueued(const Ogre::FrameEvent& evt);
@@ -93,6 +99,8 @@ protected:
     virtual bool keyReleased( const OIS::KeyEvent &arg );
     // OIS::MouseListener
     virtual bool mouseMoved( const OIS::MouseEvent &arg );
+
+    virtual void buttonHit(OgreBites::Button* button);
     virtual bool mousePressed( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
     virtual bool mouseReleased( const OIS::MouseEvent &arg, OIS::MouseButtonID id );
  
